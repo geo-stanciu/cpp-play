@@ -1,0 +1,8 @@
+.vs
+cURLExamples/.vs
+cURLExamples/Debug/
+cURLExamples/Release/
+cURLExamples/x64/
+x64/
+Debug/
+Release/
