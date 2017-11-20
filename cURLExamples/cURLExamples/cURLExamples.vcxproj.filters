@@ -24,6 +24,12 @@
     <ClInclude Include="HTTPRequest.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="MemoryStruct.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="SFTPRequest.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -33,6 +39,12 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="HTTPRequest.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="MemoryStruct.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="SFTPRequest.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

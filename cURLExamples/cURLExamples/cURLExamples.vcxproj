@@ -156,12 +156,16 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="HTTPRequest.h" />
+    <ClInclude Include="MemoryStruct.h" />
+    <ClInclude Include="SFTPRequest.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="targetver.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="cURLExamples.cpp" />
     <ClCompile Include="HTTPRequest.cpp" />
+    <ClCompile Include="MemoryStruct.cpp" />
+    <ClCompile Include="SFTPRequest.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
