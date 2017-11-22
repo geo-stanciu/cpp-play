@@ -1,9 +1,9 @@
 #include "stdafx.h"
 #include "SFTPRequest.h"
+#include "StringUtil.h"
 
-static size_t WriteMemoryCallback(void *contents, size_t size, size_t nmemb, void *userp) {
+static size_t WriteMemoryCallback(void *contents, size_t size, size_t nmemb, MemoryStruct *mem) {
 	size_t realsize = size * nmemb;
-	struct MemoryStruct *mem = (struct MemoryStruct *)userp;
 
 	mem->memory = (char *)realloc(mem->memory, mem->size + realsize + 1);
 	if (mem->memory == NULL) {
@@ -19,57 +19,143 @@ static size_t WriteMemoryCallback(void *contents, size_t size, size_t nmemb, voi
 	return realsize;
 }
 
-bool sftp_ls(const char *url, char *user, char *password, struct MemoryStruct *dest) {
-	CURL *curl;
-	CURLcode res;
-	bool ok = true;
-	char *userpass = NULL;
-	struct MemoryStruct *header = MemoryStruct_new();
-	FTPConnectType type = FTP_CONNECT_TYPE_FTP;
+SFTPRequest::SFTPRequest(FTPConnectType ftp_type,
+						 const char *host,
+						 const char *user,
+						 const char *password,
+						 const char * initial_directory) {
 
-	if (dest->memory) {
-		free(dest->memory);
-		dest->memory = NULL;
+	init(ftp_type, host, 22, user, password, initial_directory);
+}
+
+SFTPRequest::SFTPRequest(FTPConnectType ftp_type,
+						 const char *host,
+						 int port,
+						 const char *user,
+						 const char *password,
+						 const char * initial_directory) {
+
+	init(ftp_type, host, port, user, password, initial_directory);
+}
+
+SFTPRequest::~SFTPRequest(void) {
+	if (curl) {
+		curl_easy_cleanup(curl);
+		curl = NULL;
 	}
 
-	/* will be grown as needed by the realloc */
-	dest->memory = (char *)malloc(1);
-	/* no data at this point */
-	dest->size = 0;
+	if (base_url)
+		free(base_url);
 
-	/* will be grown as needed by the realloc */
-	header->memory = (char *)malloc(1);
-	/* no data at this point */
-	header->size = 0;
+	if (userpass)
+		free(userpass);
 
+	curl_global_cleanup();
+}
+
+void SFTPRequest::init(FTPConnectType ftp_type,
+					   const char *host,
+					   int port,
+					   const char *user,
+					   const char *password,
+					   const char * initial_directory) {
+
+	curl_global_init(CURL_GLOBAL_ALL);
 	curl = curl_easy_init();
 
-	if (curl) {
-		if (user && password) {
-			userpass = (char *)malloc((strlen(user) + strlen(password) + 2) * sizeof(char));
-			sprintf(userpass, "%s:%s", user, password);
+	this->ftp_type = ftp_type;
+	this->user = user;
+	this->password = password;
+	this->initial_directory = initial_directory;
 
-			//curl_easy_setopt(curl, CURLOPT_SSH_AUTH_TYPES, CURLSSH_AUTH_PASSWORD);
-			curl_easy_setopt(curl, CURLOPT_USERPWD, userpass);
+	if (user && password && strlen(user) > 0 && strlen(password) > 0) {
+		userpass = strdup_printf("%s:%s", user, password);
+	}
+
+	char *init_dir = normalize_dir(initial_directory, false);
+
+	if (ftp_type == FTP_CONNECT_TYPE_FTP)
+		base_url = strdup_printf("ftp://%s:%d/%s",
+			host ? host : "",
+			port,
+			init_dir ? init_dir : "");
+	else
+		base_url = strdup_printf("sftp://%s:%d/%s",
+			host ? host : "",
+			port,
+			init_dir ? init_dir : "");
+
+	if (init_dir)
+		free(init_dir);
+}
+
+void SFTPRequest::set_login_info() {
+	if (userpass) {
+		//curl_easy_setopt(curl, CURLOPT_SSH_AUTH_TYPES, CURLSSH_AUTH_PASSWORD);
+		curl_easy_setopt(curl, CURLOPT_USERPWD, userpass);
+	}
+
+	if (ftp_type == FTP_CONNECT_TYPE_FTP)
+		curl_easy_setopt(curl, CURLOPT_FTPPORT, "-");
+}
+
+char * SFTPRequest::normalize_dir(const char *directory, bool assume_home_if_empty) {
+	char *dir = NULL;
+
+	if (directory && strlen(directory) > 0) {
+		if (directory[0] == '/')
+			dir = strdup_printf("%s", directory + 1);
+		else
+			dir = strdup_printf("%s", directory);
+
+		size_t len = strlen(dir);
+
+		if (dir[len - 1] != '/') {
+			dir = (char *)realloc(dir, (len + 2) * sizeof(char));
+			strcat(dir, "/");
 		}
+	}
+	else if (assume_home_if_empty) {
+		dir = strdup_printf("~/");
+	}
+
+	return dir;
+}
+
+bool SFTPRequest::ls(const char *directory, MemoryStruct *dest) {
+	return ls(directory, false /* list only file names */, dest);
+}
+
+bool SFTPRequest::ls(const char *directory, bool list_details, MemoryStruct *dest) {
+	char *url = NULL;
+	char *dir = NULL;
+	CURLcode res;
+	bool ok = false;
+	MemoryStruct *header = new MemoryStruct();
+
+	header->init();
+	dest->init();
+
+	if (curl) {
+		set_login_info();
 
 		/* Define our callback to get called when there's data to be written */
 		curl_easy_setopt(curl, CURLOPT_HEADERFUNCTION, WriteMemoryCallback);
 		curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteMemoryCallback);
-		curl_easy_setopt(curl, CURLOPT_DIRLISTONLY, 1L);
+
+		if (list_details)
+			curl_easy_setopt(curl, CURLOPT_DIRLISTONLY, 0L);
+		else
+			curl_easy_setopt(curl, CURLOPT_DIRLISTONLY, 1L);
+
+		dir = normalize_dir(directory, true);
+		url = strdup_printf("%s%s", base_url ? base_url : "", dir ? dir : "");
 
 		curl_easy_setopt(curl, CURLOPT_URL, url);
-		curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void *)dest);
-		curl_easy_setopt(curl, CURLOPT_WRITEHEADER, (void *)&header);
+		curl_easy_setopt(curl, CURLOPT_WRITEDATA, dest);
+		curl_easy_setopt(curl, CURLOPT_WRITEHEADER, header);
 
 		curl_easy_setopt(curl, CURLOPT_VERBOSE, 1L);
-
-		if (strstr(url, "sftp://")) {
-			type = FTP_CONNECT_TYPE_SFTP;
-		}
-
-		if (type == FTP_CONNECT_TYPE_FTP)
-			curl_easy_setopt(curl, CURLOPT_FTPPORT, "-");
 
 		res = curl_easy_perform(curl);
 
@@ -79,67 +165,49 @@ bool sftp_ls(const char *url, char *user, char *password, struct MemoryStruct *d
 			fprintf(stderr, "curl_easy_perform() failed: %s\n",
 				curl_easy_strerror(res));
 		}
+		else {
+			ok = true;
+		}
 
-		if (userpass)
-			free(userpass);
-
-		curl_easy_cleanup(curl);
+		curl_easy_reset(curl);
 	}
 
-	MemoryStruct_cleanup(header);
+	if (dir)
+		free(dir);
+
+	if (url)
+		free(url);
+
+	if (header)
+		delete header;
 
 	return ok;
 }
 
-bool sftp_get(const char *url, char *user, char *password, struct MemoryStruct *dest) {
-	CURL *curl;
-	CURLcode res;
-	bool ok = true;
+bool SFTPRequest::get(const char *directory, const char *filename, MemoryStruct *dest) {
+	char *url = NULL;
+	char *dir = NULL;
 	char *userpass = NULL;
-	struct MemoryStruct *header = MemoryStruct_new();
-	FTPConnectType type = FTP_CONNECT_TYPE_FTP;
+	CURLcode res;
+	bool ok = false;
+	MemoryStruct *header = new MemoryStruct();
 
-	if (dest->memory) {
-		free(dest->memory);
-		dest->memory = NULL;
-	}
-
-	/* will be grown as needed by the realloc */
-	dest->memory = (char *)malloc(1);
-	/* no data at this point */
-	dest->size = 0;
-
-	/* will be grown as needed by the realloc */
-	header->memory = (char *)malloc(1);
-	/* no data at this point */
-	header->size = 0;
-
-	curl = curl_easy_init();
+	header->init();
+	dest->init();
 
 	if (curl) {
-		if (user && password) {
-			userpass = (char *)malloc((strlen(user) + strlen(password) + 2) * sizeof(char));
-			sprintf(userpass, "%s:%s", user, password);
-
-			//curl_easy_setopt(curl, CURLOPT_SSH_AUTH_TYPES, CURLSSH_AUTH_PASSWORD);
-			curl_easy_setopt(curl, CURLOPT_USERPWD, userpass);
-		}
+		set_login_info();
 
 		/* Define our callback to get called when there's data to be written */
 		curl_easy_setopt(curl, CURLOPT_HEADERFUNCTION, WriteMemoryCallback);
 		curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteMemoryCallback);
-		curl_easy_setopt(curl, CURLOPT_DIRLISTONLY, 1L);
+
+		dir = normalize_dir(directory, true);
+		url = strdup_printf("%s%s", base_url ? base_url : "", dir ? dir : "");
 
 		curl_easy_setopt(curl, CURLOPT_URL, url);
-		curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void *)dest);
-		curl_easy_setopt(curl, CURLOPT_WRITEHEADER, (void *)&header);
-
-		if (strstr(url, "sftp://")) {
-			type = FTP_CONNECT_TYPE_SFTP;
-		}
-
-		if (type == FTP_CONNECT_TYPE_FTP)
-			curl_easy_setopt(curl, CURLOPT_FTPPORT, "-");
+		curl_easy_setopt(curl, CURLOPT_WRITEDATA, dest);
+		curl_easy_setopt(curl, CURLOPT_WRITEHEADER, header);
 
 		curl_easy_setopt(curl, CURLOPT_VERBOSE, 1L);
 
@@ -151,14 +219,21 @@ bool sftp_get(const char *url, char *user, char *password, struct MemoryStruct *
 			fprintf(stderr, "curl_easy_perform() failed: %s\n",
 				curl_easy_strerror(res));
 		}
+		else {
+			ok = true;
+		}
 
-		if (userpass)
-			free(userpass);
-
-		curl_easy_cleanup(curl);
+		curl_easy_reset(curl);
 	}
 
-	MemoryStruct_cleanup(header);
+	if (dir)
+		free(dir);
+
+	if (url)
+		free(url);
+
+	if (header)
+		delete header;
 
 	return ok;
 }

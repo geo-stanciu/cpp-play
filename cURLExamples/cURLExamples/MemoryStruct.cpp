@@ -1,22 +1,28 @@
 #include "stdafx.h"
 #include "MemoryStruct.h"
 
-struct MemoryStruct * MemoryStruct_new() {
-	struct MemoryStruct *mem = NULL;
-	
-	mem = (struct MemoryStruct *)malloc(sizeof(struct MemoryStruct));
-	mem->memory = NULL;
-
-	return mem;
+MemoryStruct::MemoryStruct(void) {
+	memory = NULL;
+	size = 0;
 }
 
-void MemoryStruct_cleanup(struct MemoryStruct *mem) {
-	if (mem) {
-		if (mem->memory) {
-			free(mem->memory);
-		}
-
-		free(mem);
-		mem = NULL;
+MemoryStruct::~MemoryStruct(void) {
+	if (memory) {
+		free(memory);
+		memory = NULL;
 	}
+
+	size = 0;
+}
+
+void MemoryStruct::init() {
+	if (memory) {
+		free(memory);
+		memory = NULL;
+	}
+
+	/* will be grown as needed by the realloc */
+	memory = (char *)malloc(1);
+	/* no data at this point */
+	size = 0;
 }

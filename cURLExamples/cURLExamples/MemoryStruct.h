@@ -2,10 +2,13 @@
 
 #include <stdlib.h>
 
-struct MemoryStruct {
+class MemoryStruct {
+public:
+	MemoryStruct(void);
+	~MemoryStruct(void);
+
+	void init();
+
 	char *memory;
 	size_t size;
 };
-
-struct MemoryStruct * MemoryStruct_new();
-void MemoryStruct_cleanup(struct MemoryStruct *mem);
