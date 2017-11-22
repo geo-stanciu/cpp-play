@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "SFTPRequest.h"
 #include "StringUtil.h"
+#include <assert.h>
 
 static size_t WriteMemoryCallback(void *contents, size_t size, size_t nmemb, MemoryStruct *mem) {
 	size_t realsize = size * nmemb;
@@ -72,7 +73,7 @@ void SFTPRequest::init(FTPConnectType ftp_type,
 		userpass = strdup_printf("%s:%s", user, password);
 	}
 
-	char *init_dir = normalize_dir(initial_directory, false);
+	char *init_dir = normalize_dir(initial_directory, true);
 
 	if (ftp_type == FTP_CONNECT_TYPE_FTP)
 		base_url = strdup_printf("ftp://%s:%d/%s",
@@ -122,19 +123,21 @@ char * SFTPRequest::normalize_dir(const char *directory, bool assume_home_if_emp
 	return dir;
 }
 
-bool SFTPRequest::ls(const char *directory, MemoryStruct *dest) {
-	return ls(directory, false /* list only file names */, dest);
-}
-
-bool SFTPRequest::ls(const char *directory, bool list_details, MemoryStruct *dest) {
+bool SFTPRequest::ls(const char *directory, StringArray *filenames) {
 	char *url = NULL;
 	char *dir = NULL;
 	CURLcode res;
 	bool ok = false;
+	
+	assert(filenames != NULL);
+
+	MemoryStruct *dest = new MemoryStruct();
 	MemoryStruct *header = new MemoryStruct();
 
-	header->init();
-	dest->init();
+	header->init(true);
+	dest->init(true);
+
+	filenames->Clear();
 
 	if (curl) {
 		set_login_info();
@@ -143,10 +146,7 @@ bool SFTPRequest::ls(const char *directory, bool list_details, MemoryStruct *des
 		curl_easy_setopt(curl, CURLOPT_HEADERFUNCTION, WriteMemoryCallback);
 		curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteMemoryCallback);
 
-		if (list_details)
-			curl_easy_setopt(curl, CURLOPT_DIRLISTONLY, 0L);
-		else
-			curl_easy_setopt(curl, CURLOPT_DIRLISTONLY, 1L);
+		curl_easy_setopt(curl, CURLOPT_DIRLISTONLY, 1L); // get only filenames
 
 		dir = normalize_dir(directory, true);
 		url = strdup_printf("%s%s", base_url ? base_url : "", dir ? dir : "");
@@ -169,6 +169,34 @@ bool SFTPRequest::ls(const char *directory, bool list_details, MemoryStruct *des
 			ok = true;
 		}
 
+		char * curLine = dest->memory;
+
+		while (curLine) {
+			char * nextLine = strchr(curLine, '\n');
+			size_t curLineLen = nextLine ? (nextLine - curLine) : strlen(curLine);
+			char * file = (char *)malloc((curLineLen + 1) * sizeof(char));
+
+			if (file) {
+				memcpy(file, curLine, curLineLen);
+				file[curLineLen] = '\0';  // NUL-terminate!
+
+				if (file[curLineLen - 1] == '\r' || file[curLineLen - 1] == '\n') {
+					file[curLineLen - 1] = '\0';
+				}
+
+				if (strlen(file) > 0 && strcmp(file, ".") != 0 && strcmp(file, "..") != 0)
+					filenames->Add(file);
+			}
+			else {
+				printf("malloc error\n");
+				return false;
+			}
+
+			curLine = nextLine ? (nextLine + 1) : NULL;
+		}
+
+		filenames->Sort();
+
 		curl_easy_reset(curl);
 	}
 
@@ -177,6 +205,9 @@ bool SFTPRequest::ls(const char *directory, bool list_details, MemoryStruct *des
 
 	if (url)
 		free(url);
+
+	if (dest)
+		delete dest;
 
 	if (header)
 		delete header;
@@ -192,8 +223,8 @@ bool SFTPRequest::get(const char *directory, const char *filename, MemoryStruct 
 	bool ok = false;
 	MemoryStruct *header = new MemoryStruct();
 
-	header->init();
-	dest->init();
+	header->init(true);
+	dest->init(true);
 
 	if (curl) {
 		set_login_info();

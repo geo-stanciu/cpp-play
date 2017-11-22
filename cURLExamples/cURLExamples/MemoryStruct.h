@@ -7,7 +7,7 @@ public:
 	MemoryStruct(void);
 	~MemoryStruct(void);
 
-	void init();
+	void init(bool make_ready_4_realloc = false);
 
 	char *memory;
 	size_t size;

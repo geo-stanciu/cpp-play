@@ -15,14 +15,16 @@ MemoryStruct::~MemoryStruct(void) {
 	size = 0;
 }
 
-void MemoryStruct::init() {
+void MemoryStruct::init(bool make_ready_4_realloc) {
 	if (memory) {
 		free(memory);
 		memory = NULL;
 	}
 
-	/* will be grown as needed by the realloc */
-	memory = (char *)malloc(1);
-	/* no data at this point */
 	size = 0;
+
+	if (make_ready_4_realloc) {
+		/* will be grown as needed by the realloc */
+		memory = (char *)malloc(1);
+	}
 }

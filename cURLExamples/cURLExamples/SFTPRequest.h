@@ -2,6 +2,7 @@
 
 #include <curl/curl.h>
 #include "MemoryStruct.h"
+#include "StringArray.h"
 
 enum FTPConnectType {
 	FTP_CONNECT_TYPE_FTP,
@@ -25,8 +26,7 @@ public:
 
 	~SFTPRequest(void);
 
-	bool ls(const char *directory, MemoryStruct *dest);
-	bool ls(const char *directory, bool list_details, MemoryStruct *dest);
+	bool ls(const char *directory, StringArray *filenames);
 	bool get(const char *directory, const char *filename, MemoryStruct *dest);
 	//bool put(const char *url, const char *postdata, MemoryStruct *dest);
 
