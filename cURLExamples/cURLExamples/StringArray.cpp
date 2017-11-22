@@ -41,7 +41,7 @@ void StringArray::Clear() {
 	nr_items = 0;
 }
 
-int cmp_function(const void *a, const void *b) {
+int default_cmp_function(const void *a, const void *b) {
 	const char **ia = (const char **)a;
 	const char **ib = (const char **)b;
 
@@ -52,10 +52,14 @@ int cmp_function(const void *a, const void *b) {
 }
 
 void StringArray::Sort() {
+	Sort(&default_cmp_function);
+}
+
+void StringArray::Sort(int cmpfunction(const void *a, const void *b)) {
 	if (!array)
 		return;
 
-	qsort(array, nr_items, sizeof(char *), cmp_function);
+	qsort(array, nr_items, sizeof(char *), cmpfunction);
 }
 
 char * StringArray::operator[] (int elem) {
@@ -68,13 +72,13 @@ char * StringArray::operator[] (int elem) {
 
 void StringArray::add2matrix(char ***matrix, char *str, int *current_size)
 {
-	if (*current_size >= 0)
-	{
+	assert(*current_size >= 0);
+
+	if (capacity <= *current_size)
 		(*matrix) = (char**)realloc((*matrix), (*current_size + 1) * sizeof(char*));
 
-		(*matrix)[*current_size] = str;
-		(*current_size)++;
-	}
+	(*matrix)[*current_size] = str;
+	(*current_size)++;
 }
 
 void StringArray::free_matrix(char ***matrix, int size_y)

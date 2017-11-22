@@ -73,7 +73,7 @@ void SFTPRequest::init(FTPConnectType ftp_type,
 		userpass = strdup_printf("%s:%s", user, password);
 	}
 
-	char *init_dir = normalize_dir(initial_directory, true);
+	char *init_dir = normalize_dir(initial_directory, false);
 
 	if (ftp_type == FTP_CONNECT_TYPE_FTP)
 		base_url = strdup_printf("ftp://%s:%d/%s",

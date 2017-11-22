@@ -11,6 +11,7 @@ public:
 	int Size();
 	void Clear();
 	void Sort();
+	void Sort(int cmpfunction(const void *a, const void *b));
 
 	char *operator[] (int elem);
 
@@ -20,5 +21,6 @@ private:
 
 	char **array = NULL;
 	int nr_items = 0;
+	int capacity = 0;
 };
 
