@@ -10,14 +10,14 @@ StringArray::StringArray() {
 
 
 StringArray::~StringArray() {
-	Clear();
+	clear();
 }
 
-void StringArray::Add(char *str) {
+void StringArray::add(char *str) {
 	add2matrix(&array, str, &nr_items);
 }
 
-void StringArray::Remove(int elem) {
+void StringArray::remove(int elem) {
 	assert(elem >= 0);
 	assert(nr_items >= 0);
 	assert(elem < nr_items);
@@ -32,13 +32,12 @@ void StringArray::Remove(int elem) {
 	nr_items--;
 }
 
-int StringArray::Size() {
+int StringArray::size() {
 	return nr_items;
 }
 
-void StringArray::Clear() {
+void StringArray::clear() {
 	free_matrix(&array, nr_items);
-	nr_items = 0;
 }
 
 int default_cmp_function(const void *a, const void *b) {
@@ -51,15 +50,55 @@ int default_cmp_function(const void *a, const void *b) {
 	return strcmp(s1, s2);
 }
 
-void StringArray::Sort() {
-	Sort(&default_cmp_function);
+void StringArray::sort() {
+	sort(&default_cmp_function);
 }
 
-void StringArray::Sort(int cmpfunction(const void *a, const void *b)) {
+void StringArray::sort(int cmpfunction(const void *a, const void *b)) {
 	if (!array)
 		return;
 
 	qsort(array, nr_items, sizeof(char *), cmpfunction);
+}
+
+bool StringArray::contains(char *elem) {
+	assert(elem != NULL);
+	assert(nr_items >= 0);
+
+	if (!array)
+		return false;
+
+	for (int i = 0; i < nr_items; i++)
+	{
+		if (array[i] && strcmp(array[i], elem) == 0)
+			return true;
+	}
+
+	return false;
+}
+
+char * StringArray::concat(char delim, bool add_delim_after_last) {
+	int size = 0;
+	char *temp = NULL;
+
+	temp = (char *)malloc(size * sizeof(char));
+
+	for (int i = 0; i < nr_items; i++) {
+		char *elem = array[i];
+		int len = strlen(elem);
+
+		temp = (char *)realloc(temp, size + len + 2);
+
+		memcpy(&(temp[size]), elem, len);
+		size += len + 1;
+		temp[size - 1] = delim;
+		temp[size] = 0;
+	}
+
+	if (!add_delim_after_last)
+		temp[size - 1] = 0;
+
+	return temp;
 }
 
 char * StringArray::operator[] (int elem) {
@@ -74,8 +113,10 @@ void StringArray::add2matrix(char ***matrix, char *str, int *current_size)
 {
 	assert(*current_size >= 0);
 
-	if (capacity <= *current_size)
+	if (capacity <= *current_size) {
 		(*matrix) = (char**)realloc((*matrix), (*current_size + 1) * sizeof(char*));
+		capacity++;
+	}
 
 	(*matrix)[*current_size] = str;
 	(*current_size)++;
@@ -83,12 +124,9 @@ void StringArray::add2matrix(char ***matrix, char *str, int *current_size)
 
 void StringArray::free_matrix(char ***matrix, int size_y)
 {
-	if (matrix && (*matrix))
-	{
-		for (int i = 0; i < size_y; i++)
-		{
-			if ((*matrix)[i])
-			{
+	if (matrix && (*matrix)) {
+		for (int i = 0; i < size_y; i++) {
+			if ((*matrix)[i]) {
 				free((*matrix)[i]);
 				(*matrix)[i] = NULL;
 			}
@@ -98,5 +136,8 @@ void StringArray::free_matrix(char ***matrix, int size_y)
 
 		(*matrix) = NULL;
 	}
+
+	nr_items = 0;
+	capacity = 0;
 }
 

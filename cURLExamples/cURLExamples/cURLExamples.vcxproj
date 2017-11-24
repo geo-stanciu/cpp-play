@@ -156,6 +156,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="HTTPRequest.h" />
+    <ClInclude Include="MemoryFile.h" />
     <ClInclude Include="MemoryStruct.h" />
     <ClInclude Include="SFTPRequest.h" />
     <ClInclude Include="stdafx.h" />
@@ -166,6 +167,7 @@
   <ItemGroup>
     <ClCompile Include="cURLExamples.cpp" />
     <ClCompile Include="HTTPRequest.cpp" />
+    <ClCompile Include="MemoryFile.cpp" />
     <ClCompile Include="MemoryStruct.cpp" />
     <ClCompile Include="SFTPRequest.cpp" />
     <ClCompile Include="stdafx.cpp">

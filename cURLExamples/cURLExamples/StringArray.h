@@ -6,12 +6,14 @@ public:
 	StringArray();
 	~StringArray();
 
-	void Add(char *str);
-	void Remove(int elem);
-	int Size();
-	void Clear();
-	void Sort();
-	void Sort(int cmpfunction(const void *a, const void *b));
+	void add(char *str);
+	void remove(int elem);
+	int size();
+	void clear();
+	void sort();
+	void sort(int cmpfunction(const void *a, const void *b));
+	bool contains(char *elem);
+	char * concat(char delim, bool add_delim_after_last = false);
 
 	char *operator[] (int elem);
 

@@ -1,9 +1,8 @@
 #include "stdafx.h"
 #include "HTTPRequest.h"
 
-static size_t WriteMemoryCallback(void *contents, size_t size, size_t nmemb, void *userp) {
+static size_t WriteMemoryCallback(void *contents, size_t size, size_t nmemb, MemoryStruct *mem) {
 	size_t realsize = size * nmemb;
-	struct MemoryStruct *mem = (struct MemoryStruct *)userp;
 
 	mem->memory = (char *)realloc(mem->memory, mem->size + realsize + 1);
 	if (mem->memory == NULL) {
@@ -19,20 +18,12 @@ static size_t WriteMemoryCallback(void *contents, size_t size, size_t nmemb, voi
 	return realsize;
 }
 
-bool http_get(const char *url, struct MemoryStruct *dest) {
+bool http_get(const char *url, MemoryStruct *dest) {
 	CURL *curl;
 	CURLcode res;
 	bool ok = true;
 
-	if (dest->memory) {
-		free(dest->memory);
-		dest->memory = NULL;
-	}
-
-	/* will be grown as needed by the realloc */
-	dest->memory = (char *)malloc(1);
-	/* no data at this point */
-	dest->size = 0;
+	dest->init(true);
 
 	curl = curl_easy_init();
 
@@ -48,7 +39,7 @@ bool http_get(const char *url, struct MemoryStruct *dest) {
 		curl_easy_setopt(curl, CURLOPT_VERBOSE, 1L);
 
 		curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteMemoryCallback);
-		curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void *)dest);
+		curl_easy_setopt(curl, CURLOPT_WRITEDATA, dest);
 
 		res = curl_easy_perform(curl);
 
@@ -65,20 +56,12 @@ bool http_get(const char *url, struct MemoryStruct *dest) {
 	return ok;
 }
 
-bool http_post(const char *url, const char *postdata, struct MemoryStruct *dest) {
+bool http_post(const char *url, const char *postdata, MemoryStruct *dest) {
 	CURL *curl;
 	CURLcode res;
 	bool ok = true;
 
-	if (dest->memory) {
-		free(dest->memory);
-		dest->memory = NULL;
-	}
-
-	/* will be grown as needed by the realloc */
-	dest->memory = (char *)malloc(1);
-	/* no data at this point */
-	dest->size = 0;
+	dest->init(true);
 
 	curl = curl_easy_init();
 
@@ -101,7 +84,7 @@ bool http_post(const char *url, const char *postdata, struct MemoryStruct *dest)
 		curl_easy_setopt(curl, CURLOPT_VERBOSE, 1L);
 
 		curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteMemoryCallback);
-		curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void *)dest);
+		curl_easy_setopt(curl, CURLOPT_WRITEDATA, dest);
 
 		res = curl_easy_perform(curl);
 
