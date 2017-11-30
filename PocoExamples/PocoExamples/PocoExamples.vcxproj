@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|Win32">
@@ -89,7 +89,7 @@
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>C:\poco-1.8.0.1\Foundation\include;c:\poco-1.8.0.1\Net\include\;C:\poco-1.8.0.1\NetSSL_OpenSSL\include;C:\OpenSSL-Win32\include;C:\poco-1.8.0.1\Crypto\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\poco-1.8.0.1\Foundation\include;c:\poco-1.8.0.1\Net\include\;C:\poco-1.8.0.1\NetSSL_OpenSSL\include;C:\OpenSSL-Win32\include;C:\poco-1.8.0.1\Crypto\include;C:\poco-1.8.0.1\JSON\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
     </ClCompile>
     <Link>
@@ -121,7 +121,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>C:\poco-1.8.0.1\Foundation\include;c:\poco-1.8.0.1\Net\include\;C:\poco-1.8.0.1\NetSSL_OpenSSL\include;C:\OpenSSL-Win32\include;C:\poco-1.8.0.1\Crypto\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\poco-1.8.0.1\Foundation\include;c:\poco-1.8.0.1\Net\include\;C:\poco-1.8.0.1\NetSSL_OpenSSL\include;C:\OpenSSL-Win32\include;C:\poco-1.8.0.1\Crypto\include;C:\poco-1.8.0.1\JSON\include</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
     </ClCompile>
     <Link>
@@ -152,11 +152,28 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="HTTPUtils.h" />
+    <ClInclude Include="LEIAddress.h" />
+    <ClInclude Include="LEIBase.h" />
+    <ClInclude Include="LEIEntity.h" />
+    <ClInclude Include="LEIHeadquartersAddress.h" />
+    <ClInclude Include="LEILegalAddress.h" />
+    <ClInclude Include="LEIObject.h" />
+    <ClInclude Include="LEIParser.h" />
+    <ClInclude Include="LEIRegistration.h" />
     <ClInclude Include="stdafx.h" />
+    <ClInclude Include="StringUtil.h" />
     <ClInclude Include="targetver.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="HTTPUtils.cpp" />
+    <ClCompile Include="LEIAddress.cpp" />
+    <ClCompile Include="LEIBase.cpp" />
+    <ClCompile Include="LEIEntity.cpp" />
+    <ClCompile Include="LEIHeadquartersAddress.cpp" />
+    <ClCompile Include="LEILegalAddress.cpp" />
+    <ClCompile Include="LEIObject.cpp" />
+    <ClCompile Include="LEIParser.cpp" />
+    <ClCompile Include="LEIRegistration.cpp" />
     <ClCompile Include="PocoExamples.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
@@ -164,6 +181,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="StringUtil.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
