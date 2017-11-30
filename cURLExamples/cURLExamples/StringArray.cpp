@@ -81,7 +81,8 @@ char * StringArray::concat(char delim, bool add_delim_after_last) {
 	int size = 0;
 	char *temp = NULL;
 
-	temp = (char *)malloc(size * sizeof(char));
+	temp = (char *)malloc(1 * sizeof(char));
+	temp[0] = 0;
 
 	for (int i = 0; i < nr_items; i++) {
 		char *elem = array[i];
@@ -95,7 +96,7 @@ char * StringArray::concat(char delim, bool add_delim_after_last) {
 		temp[size] = 0;
 	}
 
-	if (!add_delim_after_last)
+	if (!add_delim_after_last && temp && size > 0)
 		temp[size - 1] = 0;
 
 	return temp;
