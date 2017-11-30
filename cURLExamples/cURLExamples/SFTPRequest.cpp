@@ -73,8 +73,6 @@ SFTPRequest::~SFTPRequest(void) {
 
 	if (userpass)
 		free(userpass);
-
-	curl_global_cleanup();
 }
 
 void SFTPRequest::init(FTPConnectType ftp_type,
@@ -84,7 +82,6 @@ void SFTPRequest::init(FTPConnectType ftp_type,
 					   const char *password,
 					   const char * initial_directory) {
 
-	curl_global_init(CURL_GLOBAL_ALL);
 	curl = curl_easy_init();
 
 	current_path = new StringArray();
